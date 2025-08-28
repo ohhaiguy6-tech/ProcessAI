@@ -1,0 +1,195 @@
+@import 'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css';
+
+body {
+    @apply bg-gray-900 text-gray-200 font-sans; /* REMOVED overflow-hidden */
+}
+
+.bpmn-container {
+    height: 100%;
+    width: 100%;
+    @apply bg-white rounded-b-lg;
+}
+
+/* Hide the default bpmn-js logo */
+.bjs-powered-by {
+    display: none !important;
+}
+
+/* Custom scrollbars for the whole app */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    @apply bg-gray-800;
+}
+::-webkit-scrollbar-thumb {
+    @apply bg-gray-600 rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-500;
+}
+
+/* Spinner animation */
+.spinner {
+    border-top-color: transparent;
+    border-right-color: transparent;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Glowing Progress Bar */
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 5px #6366f1, 0 0 10px #818cf8; }
+  50% { box-shadow: 0 0 15px #4f46e5, 0 0 25px #a5b4fc; }
+}
+
+.progress-bar-glow {
+    box-shadow: 0 0 5px #4f46e5, 0 0 10px #4f46e5;
+    animation: glow 2s ease-in-out infinite;
+}
+
+/* VSM Bottleneck Pulse */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.7;
+  }
+}
+
+.bottleneck-pulse svg {
+    color: #ef4444; /* red-500 */
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+.bottleneck-pulse p {
+    color: #b91c1c; /* red-800 */
+    font-weight: 700;
+}
+
+/* AI Feedback Loop Toast */
+.feedback-toast {
+    @apply fixed bottom-5 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2 text-sm;
+    opacity: 0;
+    transform: translate(-50%, 20px);
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+    z-index: 100;
+}
+
+.feedback-toast.show {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+
+/* BPMN.io Context Pad Visibility Fix */
+.djs-context-pad .entry {
+    background-color: white !important; /* Ensure a solid background for the button */
+    border: 1px solid #e0e0e0 !important; /* Add a light border to define the button area */
+    border-radius: 4px !important; /* Soften the corners */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important; /* Add a subtle shadow to lift it off the page */
+    width: 40px !important; /* Enforce a consistent size */
+    height: 40px !important;
+    display: flex !important; /* Use flexbox to center icon */
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.djs-context-pad .entry:hover {
+    background-color: #f5f5f5 !important; /* Visual feedback on hover */
+    border-color: #ccc !important;
+}
+
+/* 
+  This is the key fix: target the icon's pseudo-element within the button.
+  The icon itself is rendered using the ::before pseudo-element on the span.
+  We MUST apply the bpmn font family to render the icon glyphs.
+*/
+.djs-context-pad .entry span::before {
+    font-family: "bpmn" !important; /* CRITICAL: Apply the bpmn-font to render icons */
+    color: #222 !important; /* Force a dark color on the icon font */
+    font-size: 22px !important; /* Make icon larger and more visible */
+    line-height: 1 !important; /* Helps with vertical alignment */
+}
+
+/* Showcase Animations for futuristic homepage */
+.showcase-card-container {
+    perspective: 1000px;
+}
+.showcase-card {
+    transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s;
+    transform-style: preserve-3d;
+}
+.showcase-card:hover {
+    transform: rotateY(10deg) rotateX(5deg) scale(1.05);
+    box-shadow: 0 25px 50px -12px rgba(99, 102, 241, 0.25);
+}
+
+/* Dark subtle background pattern for dashboards */
+.subtle-bg-pattern-dark {
+    background-color: #111827; /* bg-gray-900 */
+    background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+
+/* NEW Generating Animation for Module Card */
+@keyframes pulse-bg {
+  0%, 100% { background-color: rgba(99, 102, 241, 0.05); border-color: rgba(99, 102, 241, 0.3); }
+  50% { background-color: rgba(99, 102, 241, 0.15); border-color: rgba(99, 102, 241, 0.5); }
+}
+
+.module-generating {
+    animation: pulse-bg 1.8s infinite ease-in-out;
+}
+
+/* Donut Chart for Project Charter Budget */
+.donut-chart {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    margin: 20px auto;
+}
+.donut-chart-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100px;
+    height: 100px;
+    background: #1f2937; /* bg-gray-800 */
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.donut-chart-total {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #d1d5db; /* text-gray-300 */
+}
+.donut-chart-label {
+    font-size: 0.75rem;
+    color: #9ca3af; /* text-gray-400 */
+}
+
+/* Editable Field Component styles */
+.editable-field {
+    cursor: pointer;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.2);
+    transition: border-bottom-color 0.2s;
+    padding: 2px 0;
+}
+.editable-field:hover {
+    border-bottom-color: rgba(99, 102, 241, 0.8);
+}
