@@ -1,8 +1,73 @@
 @import 'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css';
 
 body {
-    @apply bg-gray-900 text-gray-200 font-sans; /* REMOVED overflow-hidden */
+    background-color: #0A0A0A; /* Fallback */
+    background-image:
+        linear-gradient(rgba(0, 122, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 122, 255, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    @apply text-gray-200 font-sans;
 }
+
+/* Landing Page: Glassmorphism Effect for Feature Cards */
+.glassmorphism {
+    background: rgba(31, 41, 55, 0.4); /* Equivalent to bg-gray-800/40 */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(55, 65, 81, 1); /* Equivalent to border-gray-700 */
+}
+
+/* Landing Page: Glow Card Effect */
+@keyframes glow-border {
+    0%, 100% { box-shadow: 0 0 15px rgba(0, 122, 255, 0.2), 0 0 20px rgba(0, 122, 255, 0.1); border-color: rgba(0, 122, 255, 0.5); }
+    50% { box-shadow: 0 0 25px rgba(0, 122, 255, 0.4), 0 0 40px rgba(0, 122, 255, 0.2); border-color: rgba(0, 122, 255, 0.8); }
+}
+
+.glow-card {
+    animation: glow-border 3s ease-in-out infinite;
+}
+
+/* Landing Page: Animated SVGs */
+@keyframes glowing-dot-pulse {
+    0%, 100% { fill-opacity: 0.7; filter: drop-shadow(0 0 3px #a5b4fc); }
+    50% { fill-opacity: 1; filter: drop-shadow(0 0 6px #a5b4fc); }
+}
+.glowing-dot {
+  animation: glowing-dot-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes pulse-shadow {
+    0%, 100% { filter: drop-shadow(0px 2px 4px rgba(0, 122, 255, 0)); }
+    50% { filter: drop-shadow(0px 2px 8px rgba(0, 122, 255, 0.3)); }
+}
+.kanban-task-animated {
+    animation: pulse-shadow 3s ease-in-out infinite;
+}
+
+
+/* Landing Page: Input Modal */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(10, 10, 10, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.modal-content {
+    animation: scaleIn 0.3s ease-out;
+    width: 100%;
+    max-width: 48rem; /* ~768px */
+    max-height: 90vh;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 
 .bpmn-container {
     height: 100%;
@@ -108,11 +173,6 @@ body {
     border-color: #ccc !important;
 }
 
-/* 
-  This is the key fix: target the icon's pseudo-element within the button.
-  The icon itself is rendered using the ::before pseudo-element on the span.
-  We MUST apply the bpmn font family to render the icon glyphs.
-*/
 .djs-context-pad .entry span::before {
     font-family: "bpmn" !important; /* CRITICAL: Apply the bpmn-font to render icons */
     color: #222 !important; /* Force a dark color on the icon font */
@@ -120,31 +180,10 @@ body {
     line-height: 1 !important; /* Helps with vertical alignment */
 }
 
-/* Showcase Animations for futuristic homepage */
-.showcase-card-container {
-    perspective: 1000px;
-}
-.showcase-card {
-    transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s;
-    transform-style: preserve-3d;
-}
-.showcase-card:hover {
-    transform: rotateY(10deg) rotateX(5deg) scale(1.05);
-    box-shadow: 0 25px 50px -12px rgba(99, 102, 241, 0.25);
-}
-
-/* Dark subtle background pattern for dashboards */
-.subtle-bg-pattern-dark {
-    background-color: #111827; /* bg-gray-900 */
-    background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-    background-size: 20px 20px;
-}
-
-
 /* NEW Generating Animation for Module Card */
 @keyframes pulse-bg {
-  0%, 100% { background-color: rgba(99, 102, 241, 0.05); border-color: rgba(99, 102, 241, 0.3); }
-  50% { background-color: rgba(99, 102, 241, 0.15); border-color: rgba(99, 102, 241, 0.5); }
+  0%, 100% { background-color: rgba(0, 122, 255, 0.05); border-color: rgba(0, 122, 255, 0.3); }
+  50% { background-color: rgba(0, 122, 255, 0.15); border-color: rgba(0, 122, 255, 0.5); }
 }
 
 .module-generating {
@@ -191,5 +230,5 @@ body {
     padding: 2px 0;
 }
 .editable-field:hover {
-    border-bottom-color: rgba(99, 102, 241, 0.8);
+    border-bottom-color: rgba(0, 122, 255, 0.8);
 }

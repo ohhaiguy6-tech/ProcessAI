@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import React from 'react';
+// Fix: Removed AppGuideView and ProjectCreationView as they are not used and were causing import errors.
 import { GoogleGenAI, Chat } from "@google/genai";
 import { 
     ExcelDataItem, ConsultantInsightsData, SopData, VsmData, CjmData, PlaybookData, View, ProjectData, ProjectTask,
@@ -12,7 +13,7 @@ import {
     InputScreen, HomeScreen, ProcessMapView, ConsultantInsightsView, 
     ProcessGuideView, DeepDiveView, ValueStreamMapView, CustomerJourneyMapView, 
     OptimizationPlaybookView, ModulePageWrapper, ProjectExecutionView,
-    ProjectCreationView, AppGuideView, ProjectIntelligentHomeScreen, ProjectCharterView, CommunicationPlanView,
+    ProjectIntelligentHomeScreen, ProjectCharterView, CommunicationPlanView,
     ComplianceRiskView
 } from './views.tsx';
 import { 
@@ -270,81 +271,65 @@ export const App = () => {
     };
 
     const startGenerationPipeline = async (ai: GoogleGenAI, inputForAnalysis: string, newLevel: string) => {
-        setAnalysisLevel(newLevel); // Ensure analysis level is updated for prompts
+        setAnalysisLevel(newLevel);
     
-        const processModules = [
-            { key: 'consultant-insights', func: handleGenerateAnalysisAndInsights },
-            { key: 'compliance-risk', func: handleGenerateComplianceRisk },
-            { key: 'customer-journey-map', func: handleGenerateCustomerJourneyMap },
-            { key: 'value-stream-map', func: handleGenerateValueStreamMap },
-            { key: 'process-guide', func: handleGenerateSop },
-            { key: 'optimization-playbook', func: handleGeneratePlaybook },
-        ];
-        
-        const projectModules = [
-            { key: 'project-charter', func: handleGenerateProjectCharter },
-            { key: 'communication-plan', func: handleGenerateCommunicationPlan },
-        ];
-
-        let analysisResult = null, vsmResult = null, playbookResult = null, charterResult = null;
-        
-        // --- PROCESS INTELLIGENT GENERATION ---
-        for (const module of processModules) {
-            setModuleStatuses(prev => ({ ...prev, [module.key]: 'generating' }));
+        const runModule = async (key: string, func: Function, ...args: any[]) => {
+            setModuleStatuses(prev => ({ ...prev, [key]: 'generating' }));
             try {
-                let result;
-                if (module.key === 'consultant-insights') {
-                    result = await generateWithRetry(module.func, ai, inputForAnalysis);
-                    analysisResult = result;
-                    if (result) {
-                        setProcessName(result.processName);
-                        const systemInstruction = `You are "Process Intelligence Assistant", an expert AI consultant. You have been provided with the full context of a business process. Use this data to provide specific, credible answers. **CRITICAL FORMATTING RULE:** Your responses MUST be plain text. DO NOT use any markdown.`;
-                        chatRef.current = ai.chats.create({ model: 'gemini-2.5-flash', config: { systemInstruction } });
-                    }
-                } else if (module.key === 'optimization-playbook') {
-                    result = await generateWithRetry(module.func, ai, inputForAnalysis, analysisResult, vsmResult);
-                    playbookResult = result;
+                const result = await generateWithRetry(func, ...args);
+                if (result === undefined || (typeof result === 'object' && result !== null && 'sufficientData' in result && result.sufficientData === false)) {
+                    setModuleStatuses(prev => ({ ...prev, [key]: 'ready' }));
+                } else if (!result) {
+                    throw new Error(`${key} generation returned null or failed after retry.`);
                 } else {
-                    result = await generateWithRetry(module.func, ai, inputForAnalysis, analysisResult);
-                    if (module.key === 'value-stream-map') vsmResult = result;
+                    setModuleStatuses(prev => ({ ...prev, [key]: 'ready' }));
                 }
-                if (!result) throw new Error(`${module.key} generation returned null or failed after retry.`);
-                setModuleStatuses(prev => ({ ...prev, [module.key]: 'ready' }));
+                return result;
             } catch (err) {
-                console.error(`Generation failed for ${module.key} after retry:`, err);
-                setModuleStatuses(prev => ({ ...prev, [module.key]: 'error' }));
+                console.error(`Generation failed for ${key} after retry:`, err);
+                setModuleStatuses(prev => ({ ...prev, [key]: 'error' }));
+                throw err;
             }
-        }
-    
-        // --- PROJECT INTELLIGENT GENERATION (AUTOMATED) ---
-        for (const module of projectModules) {
-            setModuleStatuses(prev => ({ ...prev, [module.key]: 'generating' }));
-             try {
-                let result;
-                if (module.key === 'project-charter') {
-                    result = await generateWithRetry(module.func, ai, inputForAnalysis, analysisResult, playbookResult);
-                    charterResult = result;
-                } else if (module.key === 'communication-plan') {
-                    result = await generateWithRetry(module.func, ai, inputForAnalysis, charterResult);
-                }
-                if (!result) throw new Error(`${module.key} generation returned null or failed after retry.`);
-                setModuleStatuses(prev => ({ ...prev, [module.key]: 'ready' }));
-            } catch (err) {
-                console.error(`Generation failed for ${module.key} after retry:`, err);
-                setModuleStatuses(prev => ({ ...prev, [module.key]: 'error' }));
-            }
-        }
+        };
 
-        // Final status updates
-        setModuleStatuses(prev => ({ ...prev,
-            'deep-dive': prev['consultant-insights'] === 'ready' ? 'ready' : 'locked',
-            'project-execution': prev['optimization-playbook'] === 'ready' ? 'ready' : 'locked',
-        }));
+        try {
+            // --- PHASE 1: CORE ANALYSIS ---
+            const analysisResult = await runModule('consultant-insights', handleGenerateAnalysisAndInsights, ai, inputForAnalysis);
+            if (analysisResult) {
+                setProcessName(analysisResult.processName);
+                const systemInstruction = `You are "Process Intelligence Assistant", an expert AI consultant. You have been provided with the full context of a business process. Use this data to provide specific, credible answers. **CRITICAL FORMATTING RULE:** Your responses MUST be plain text. DO NOT use any markdown.`;
+                chatRef.current = ai.chats.create({ model: 'gemini-2.5-flash', config: { systemInstruction } });
+                setModuleStatuses(prev => ({ ...prev, 'deep-dive': 'ready' })); // Unlock Deep Dive early
+            }
+
+            // --- PHASE 2: DETAILED DOCUMENTATION & STRATEGIC ANALYSIS (Strictly Sequential) ---
+            await runModule('process-guide', handleGenerateSop, ai, inputForAnalysis, analysisResult);
+            const vsmResult = await runModule('value-stream-map', handleGenerateValueStreamMap, ai, inputForAnalysis, analysisResult);
+            await runModule('customer-journey-map', handleGenerateCustomerJourneyMap, ai, inputForAnalysis, analysisResult);
+            await runModule('compliance-risk', handleGenerateComplianceRisk, ai, inputForAnalysis, analysisResult);
+            
+            // --- PHASE 3: ACTIONABLE STRATEGY ---
+            const playbookResult = await runModule('optimization-playbook', handleGeneratePlaybook, ai, inputForAnalysis, analysisResult, vsmResult);
+            if (playbookResult) {
+                setModuleStatuses(prev => ({ ...prev, 'project-execution': 'ready' }));
+            }
+            
+            // --- PHASE 4: PROJECT INTELLIGENCE ---
+            const charterResult = await runModule('project-charter', handleGenerateProjectCharter, ai, inputForAnalysis, analysisResult, playbookResult);
+            await runModule('communication-plan', handleGenerateCommunicationPlan, ai, inputForAnalysis, charterResult);
+            
+        } catch (error) {
+            console.error("A critical module failed, halting generation pipeline.", error);
+        }
     };
     
     const handleGenerate = async () => {
         if (!process.env.API_KEY) { setError('API key is not configured.'); return; }
-        if (!inputText && !fileData) { setError('Please provide a process description or upload a file.'); return; }
+        // CRITICAL FIX: Input validation / hallucination prevention
+        if ((!inputText || inputText.length < 250) && !fileData) {
+            setError('Please provide a more detailed process description (at least 250 characters) or upload a file to ensure a high-quality analysis and avoid generating inaccurate content.');
+            return;
+        }
 
         setError(null);
         resetGeneratedContent();
@@ -762,9 +747,9 @@ export const App = () => {
                 </div>
             </ModulePageWrapper>;
             case 'consultant-insights': return <ModulePageWrapper title="Consultant Insights" onBack={() => setCurrentView('home')} exportMenu={<ExportControls onExportXLSX={() => exportAnalysisAsXLSX(detailedAnalysis, processName)} hasAnalysis={!!detailedAnalysis} />}> <ConsultantInsightsView insights={detailedAnalysis?.consultantInsights} isLoading={isInsightsLoading} /></ModulePageWrapper>;
-            case 'process-guide': return <ModulePageWrapper title="Process Guide (SOP)" onBack={() => setCurrentView('home')} exportMenu={<ExportControls onExportXLSX={() => exportSopAsXLSX(sopContent, processName)} onExportTXT={() => exportSopAsText(sopContent, processName)} onExportDOCX={() => exportSopAsDocx(sopContent, processName)} hasAnalysis={!!sopContent} />}><ProcessGuideView sopData={sopContent} isLoading={isSopLoading} /></ModulePageWrapper>;
+            case 'process-guide': return <ModulePageWrapper title="Process Guide (SOP)" onBack={() => setCurrentView('home')} exportMenu={<ExportControls onExportXLSX={() => exportSopAsXLSX(sopContent, processName)} onExportTXT={() => exportSopAsText(sopContent, processName)} onExportDOCX={() => exportSopAsDocx(sopContent, processName)} hasAnalysis={!!sopContent} />}><ProcessGuideView sopData={sopContent} isLoading={isSopLoading} setSopContent={setSopContent} /></ModulePageWrapper>;
             case 'deep-dive': return <ModulePageWrapper title="Deep Dive Chat" onBack={() => setCurrentView('home')}><DeepDiveView history={deepDiveHistory} isLoading={isDeepDiveLoading} onQuery={handleDeepDiveQuery} hasFullContext={!!chatRef.current} /></ModulePageWrapper>;
-            case 'value-stream-map': return <ModulePageWrapper title="Value Stream Map" onBack={() => setCurrentView('home')} exportMenu={<ExportControls onExportXLSX={() => exportVsmAsXLSX(valueStreamMapContent.data, detailedAnalysis, processName)} hasAnalysis={!!valueStreamMapContent.data} />}><ValueStreamMapView vsmState={valueStreamMapContent} isLoading={isValueStreamMapLoading} /></ModulePageWrapper>;
+            case 'value-stream-map': return <ModulePageWrapper title="Value Stream Map" onBack={() => setCurrentView('home')} exportMenu={<ExportControls onExportXLSX={() => exportVsmAsXLSX(valueStreamMapContent.data, detailedAnalysis, processName)} hasAnalysis={!!valueStreamMapContent.data} />}><ValueStreamMapView vsmState={valueStreamMapContent} isLoading={isValueStreamMapLoading} setValueStreamMapContent={setValueStreamMapContent} /></ModulePageWrapper>;
             case 'customer-journey-map': return <ModulePageWrapper title="Customer Journey Map" onBack={() => setCurrentView('home')} exportMenu={<ExportControls onExportXLSX={() => exportCjmAsXLSX(customerJourneyMapContent, processName)} hasAnalysis={!!customerJourneyMapContent} />}><CustomerJourneyMapView cjmData={customerJourneyMapContent} isLoading={isCustomerJourneyMapLoading} /></ModulePageWrapper>;
             case 'compliance-risk': return <ModulePageWrapper title="Compliance & Risk Analysis" onBack={() => setCurrentView('home')} exportMenu={<ExportControls onExportXLSX={() => exportComplianceRiskAsXLSX(complianceRiskContent, processName)} hasAnalysis={!!complianceRiskContent} />}><ComplianceRiskView complianceRiskData={complianceRiskContent} isLoading={isComplianceRiskLoading} /></ModulePageWrapper>;
             case 'optimization-playbook': return <ModulePageWrapper title="Optimization Playbook" onBack={() => setCurrentView('home')} exportMenu={<ExportControls onExportXLSX={() => exportPlaybookAsXLSX(playbookContent, processName)} hasAnalysis={!!playbookContent} />}><OptimizationPlaybookView playbookData={playbookContent} isLoading={isPlaybookLoading} onCreateProject={handleCreateProjectFromPlaybook} isCreatingProject={isProjectLoading} /></ModulePageWrapper>;

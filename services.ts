@@ -373,9 +373,98 @@ ${getJsonOutputRules()}
 `;
 };
 
+const getSopFrameworkText = () => `
+<SOP_FRAMEWORK_DOCUMENT>
+    
+    ### 1. Purpose
+    Define best practices and structure for AI to convert unstructured operational information (meetings, notes, chat logs, etc.) into a well-formatted, professional SOP document.
+
+    ### 2. Input Data Types
+    AI should handle various unstructured sources, such as:
+    *   Meeting transcripts between consultants, process owners, and technical managers
+    *   Email summaries or business discussions
+    *   Process flow notes, user stories, and technical documentation
+
+    ### 3. Data Structuring Process
+    The AI should follow a 3-stage conversion pipeline:
+    
+    **Stage 1: Data Understanding**
+    *   Identify key process roles (e.g., Process Owner, User, Driver, Tech Manager).
+    *   Extract intent, tasks, tools, KPIs, dependencies, and risks from unstructured text.
+    *   Filter out conversational or filler language.
+    
+    **Stage 2: SOP Structuring**
+    *   Organize extracted data into a defined SOP framework.
+    *   Ensure clarity, actionability, and natural tone (no placeholders like “fill in date”).
+    
+    **Stage 3: SOP Refinement**
+    *   Validate logical flow: Purpose → Scope → Roles → Procedure → Exceptions → Review Cycle.
+    *   Maintain consistent terminology, plain professional language, and readability.
+
+    ### 4. SOP Document Format
+    
+    **A. Cover Page**
+    *   **SOP Title:** Clear, descriptive name (Editable, Mandatory)
+    *   **Version:** Auto-increment (e.g., v1.0) (Editable, Mandatory)
+    *   **Created By:** AI or Author name (Editable, Mandatory)
+    *   **Created Date:** Auto-filled (Editable, Mandatory)
+    *   **Reviewed By:** Role/Name (Editable, Mandatory)
+    *   **Approval Status:** Draft / Approved (Editable, Mandatory)
+    
+    **B. Index Page**
+    Auto-generated with clickable sections for easy navigation:
+    *   Overview, Purpose, Scope, Roles and Responsibilities, Procedure Steps, Tools/Systems Used, Risk & Mitigation, Review Cycle, Change History.
+
+    **C. SOP Body Template**
+    1.  **Purpose:** Explain the intent and business value of the SOP clearly.
+    2.  **Scope:** Define what the SOP covers (departments, systems, limits).
+    3.  **Roles and Responsibilities:** List key stakeholders and their duties.
+    4.  **Procedure Steps:**
+        *   Sequential, action-based steps.
+        *   Use numbering and bullet hierarchy.
+        *   Include "Expected Outcome" per step.
+    5.  **Tools & References:** Link to relevant systems, dashboards, or documents.
+    6.  **Risk & Mitigation:** Highlight known risks and control measures.
+    7.  **Change History:** Version, Date, Changes, Updated By.
+    8.  **Review Cycle:** Define frequency (e.g., Quarterly, Annually).
+
+    ### 5. Tone & Style Guidelines
+    *   **Professional, human-like tone** (avoid robotic or template language).
+    *   **Use active voice:** "The system verifies input” instead of “Input should be verified."
+    *   **Avoid placeholders** like “fill name here” — generate or leave editable fields with brackets [Role Name].
+    *   Keep sentences **clear, short, and business-oriented**.
+
+    ### 6. AI Functional Capabilities
+    *   **Edit Mode:** Allow user to modify sections manually while retaining structure.
+    *   **Filter & Search:** Quickly locate sections or SOPs by keyword, role, or system.
+    *   **Version Control:** Auto-track changes with timestamps and author ID.
+    *   **SOP Regeneration:** AI refines or rewrites SOPs based on updated unstructured data.
+    *   **Validation Check:** Detect missing mandatory sections before publishing.
+    *   **Export:** Generate in formats (Word, PDF, HTML).
+
+    ### 7. SOP Generation Workflow (AI Perspective)
+    1.  **Input Parsing:** Capture and segment unstructured text.
+    2.  **Entity Extraction:** Identify key business entities and actions.
+    3.  **Mapping to Template:** Match extracted info to SOP structure.
+    4.  **Tone Normalization:** Rewrite into professional, human-like prose.
+    5.  **Formatting:** Apply layout, table, numbering, and metadata.
+    6.  **Output Generation:** Produce structured, editable SOP document.
+
+    ### 8. Quality and Compliance Checks
+    *   Each SOP must pass **Consistency Check** (terminology, versioning, date).
+    *   Ensure **Role alignment** (no missing owners or undefined approvers).
+    *   Maintain **Review Logs** for audit and governance purposes.
+
+</SOP_FRAMEWORK_DOCUMENT>
+`;
+
 export const buildSopPrompt = (processName, excelData, insights, originalInput) => {
     return `
 You are an expert technical writer and business process consultant tasked with creating a world-class Standard Operating Procedure (SOP). Your output must be a single, valid JSON object that strictly adheres to the provided schema.
+
+**CRITICAL FRAMEWORK MANDATE:**
+You MUST adhere to the following comprehensive framework for generating the SOP. This is not a suggestion; it is a strict set of rules for structure, content, tone, and format that you must follow precisely.
+${getSopFrameworkText()}
 
 **CRITICAL DATA SOURCING MANDATE:**
 Your primary source of truth is the **User's Original Input**. You must read it carefully to understand the nuances, unspoken rules, and true context of the process. The 'Structured Process Steps' and 'Consultant Insights' are valuable structured summaries, but the original text contains the most detail. Synthesize information from all sources to create the most accurate and comprehensive SOP possible.
@@ -425,8 +514,42 @@ export const buildVsmSufficiencyCheckPrompt = (originalInput: string) => {
     `;
 };
 
+const getVsmFrameworkText = () => `
+<VSM_FRAMEWORK_DOCUMENT>
+    ### 1. Purpose
+    Define best practices and structure for AI to convert unstructured operational and process data into a well-structured Value Stream Map (VSM) document. This ensures consistency, visibility, and improvement tracking across process stages and stakeholders.
+
+    ### 2. Input Data Types
+    AI should handle unstructured sources such as meeting notes, process logs, user stories, team discussions, KPI reports, and system transactions to extract process flow details.
+
+    ### 3. Data Structuring Process
+    - **Stage 1: Data Understanding** – Identify process actors, actions, systems, inputs, and outputs.
+    - **Stage 2: Mapping** - Translate extracted data into a structured flow: Supplier → Input → Process → Output → Customer.
+    - **Stage 3: Refinement** – Validate time, waste, delay, and efficiency metrics across the mapped flow.
+
+    ### 4. VSM Document Format
+    - **Body Template includes:** Purpose, Scope, Process Overview, Current State Map, Future State Map, Metrics Summary, Bottlenecks, Improvement Actions, Review Cycle, and Change History.
+
+    ### 5. Tone & Style Guidelines
+    Use professional, clear, and analytical tone. Avoid vague terms. Use active voice and data-backed statements. Focus on flow efficiency, measurable improvements, and actionable insights.
+
+    ### 6. AI Functional Capabilities
+    Edit Mode, Filter/Search, Version Control, Map Regeneration, Validation Check, Export. AI should enable comparison between Current and Future State Maps and highlight improvement points automatically.
+
+    ### 7. VSM Generation Workflow (AI Perspective)
+    Input Parsing → Process Entity Extraction → Flow Mapping → Data Normalization → Visualization Layer → Output Generation.
+    
+    ### 8. Quality & Compliance Checks
+    Ensure completeness of process flow, correct time and waste metrics, stakeholder alignment, and version tracking. Maintain audit trail of changes and improvement history.
+</VSM_FRAMEWORK_DOCUMENT>
+`;
+
 export const buildVsmPrompt = (processName, excelData, insights, originalInput) => `
 You are a Lean Six Sigma Master Black Belt specializing in Value Stream Mapping (VSM). Your task is to analyze the provided business process and generate a comprehensive VSM analysis as a single JSON object.
+
+**CRITICAL FRAMEWORK MANDATE:**
+You MUST adhere to the following comprehensive framework for generating the VSM. This is not a suggestion; it is a strict set of rules for structure, content, tone, and format that you must follow precisely.
+${getVsmFrameworkText()}
 
 **CRITICAL ANALYSIS MANDATE:**
 Your primary task is to derive the value stream directly from the user's 'Original Input'. The 'Detailed Process Steps' from the BPMN map are for reference only. You are NOT required to create a VSM step for every BPMN step. You MUST consolidate, expand, or re-interpret the flow based on what creates or destroys value from a Lean perspective. The final 'flow' in your JSON output should reflect YOUR expert VSM analysis, not a simple copy of the BPMN structure.
@@ -444,7 +567,7 @@ Semantically analyze each task description from the 'Original Input' to categori
 
 **CONTEXT FOR ANALYSIS:**
 - Process Name: ${processName}
-- Original Input (Primary Source): ${originalInput}
+- Original Input (Primary Source): """${originalInput}"""
 - Detailed Process Steps (Reference): ${JSON.stringify(excelData)}
 - Consultant Insights (Reference for bottlenecks): ${JSON.stringify(insights)}
 
